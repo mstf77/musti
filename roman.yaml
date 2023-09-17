@@ -1,0 +1,55 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: |
+  flask_proje
+
+  
+Resources:
+  WebServerHost:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-04cb4ca688797756f
+      InstanceType: t2.micro
+      KeyName: first-key pair
+      SecurityGroupIds:
+        - !Ref MySecGrp
+      Tags: 
+        - Key: Name 
+          Value: !Sub Web Server of ${AWS::StackName}
+
+      UserData: !Base64 |
+        #!/bin/bash
+          yum update -y
+          yum install python3 -y
+          FOLDER="https://raw.githubusercontent.com/mstf77/musti/main"
+          cd /home/ec2-user
+          python3 -m venv env
+          source env/bin/activate
+          wget ${FOLDER}/roman-numerals-converter-app.py
+          mkdir templates && cd templates
+          wget ${FOLDER}/templates/index.html
+          wget ${FOLDER}/templates/result.html
+          cd ..
+          pip install flask
+          python3 roman-numerals-converter-app.py
+        
+
+
+
+
+  MySecGrp:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: ssh and http # Required
+      SecurityGroupIngress: 
+       - IpProtocol: tcp
+         FromPort: 22
+         ToPort: 80
+         CidrIp: 0.0.0.0/0
+  
+    
+  
+Outputs:
+  MUSTAFA:
+    Value: !Sub 
+      - http://${PublicAddress}
+      - PublicAddress: !GetAtt WebServerHost.PublicDnsName
